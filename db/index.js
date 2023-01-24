@@ -20,7 +20,7 @@
 
 const pg = require('pg')
 const { Client } = pg
-
+const addDays = require('date-fns/addDays')
 const client = new Client('postgres://localhost:5432/phenomena-dev');
 
 
@@ -28,8 +28,14 @@ async function getOpenReports() {
   try {
     // first load all of the reports which are open
     const { rows: report } = await client.query(`SELECT * FROM reports`)
-    console.log(report)
-return []
+    const openReports = report.filter(repo=>{
+      return repo.isOpen 
+    })
+
+   
+    console.log(openReports)
+    
+return 
 
  
     // then load the comments only for those reports, using a
@@ -75,7 +81,7 @@ async function createReport(reportFields) {
     INSERT INTO reports(title,location,description,password)
     VALUES($1,$2,$3,$4)`, reportFieldsValues)
 
-    const { rows: [report] } = await client.query(`
+    const { rows: report } = await client.query(`
     SELECT 
     id, 
     title,
@@ -175,40 +181,28 @@ async function createReportComment(reportId, commentFields) {
 
   try {
 
-    const {rows:[report]} = await client.query(`SELECT * FROM reports WHERE id=$1`,[reportId])
+    const {rows:report} = await client.query(`SELECT * FROM reports WHERE id=$1`,[reportId])
     // grab the report we are going to be commenting on
-    
-
     if(!report){
       console.error('no report found')
     }
     // if it wasn't found, throw an error saying so
-
     if(report.isOpen === false){
       console.error('report is not open')
     }
     // if it is not open, throw an error saying so
-
     if(Date.parse(report.expirationDate) < new Date()){
       console.error('expired')
     }
     // if the current date is past the expiration, throw an error saying so
     // you can use Date.parse(report.expirationDate) < new Date() to check
     if(report){
-   
-      report.comments = comment
-      // report.expirationDate = expirationDate
-      console.log(report.expirationDate)
-      report.expirationDate = report.expirationDate.setDate(report.expirationDate.getDate() + 1)
-      console.log(report.expirationDate)
+     report.comments = comment
+     report.expirationDate = addDays(report.expirationDate,1)
+     return report.comment
     }
-
-
-
-    // then update the expiration date to a day from now
-
-
-    // finally, return the comment
+// then update the expiration date to a day from now
+// finally, return the comment
 
 
   } catch (error) {
@@ -217,4 +211,4 @@ async function createReportComment(reportId, commentFields) {
 }
 
 // export the client and all database functions below
-module.exports = { client, createReport, createReportComment }
+module.exports = { client, createReport, createReportComment ,getOpenReports}

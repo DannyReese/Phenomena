@@ -25,3 +25,10 @@
 
 // Start the server listening on port PORT
 // On success, connect to the database
+const express = require('express');
+const morgan = require('morgan');
+const server = express();
+const PORT = process.env.PORT;
+server.use(express.json());
+server.use(morgan('dev'));
+server.use('/api')
