@@ -25,10 +25,29 @@
 
 // Start the server listening on port PORT
 // On success, connect to the database
+require('dotenv').config()
 const express = require('express');
 const morgan = require('morgan');
 const server = express();
+const cors = require('cors')
+const {apiRouter} = require('./api')
+const {client} = require('./db/index')
 const PORT = process.env.PORT;
-server.use(express.json());
+
+
 server.use(morgan('dev'));
-server.use('/api')
+server.use(express.json());
+
+server.use(cors())
+// server.use('/api')
+
+server.use((req,res,next)=>{
+    console.log('beginning apiRouter')
+    next()
+})
+server.use('/api',apiRouter)
+
+server.listen(PORT,()=>{
+    console.log('listening to ' + PORT)
+    client.connect()
+})

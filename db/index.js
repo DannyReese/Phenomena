@@ -138,6 +138,8 @@ async function _getReport(reportId) {
  * 
  * If nothing is updated this way, throw an error
  */
+
+
 async function closeReport(reportId, password) {
 
   try {
