@@ -12,7 +12,7 @@
 // Import the database adapter functions from the db
 const express = require('express')
 const apiRouter = express.Router()
-const { getOpenReports, createReport } = require('../db/index')
+const { getOpenReports, createReport,closeReport, createReportComment } = require('../db/index')
 
 
 apiRouter.use((req, res, next) => {
@@ -64,7 +64,30 @@ apiRouter.post('/reports', async (req, res, next) => {
         next(error)
     }
 })
+
+apiRouter.post('/reports/:reportId/comments',async(req,res,next)=>{
+    try{
+        const {reportId} = req.params
+        const content = req.body
+       console.log(content)
+        const comment = await createReportComment(reportId,content)
+        console.log(comment)
+        res.send(comment)
+    }catch(error){
+        next(error)
+    }
+})
 /**
+ * Set up a POST request for /reports/:reportId/comments
+ * 
+ * - it should use an async function
+ * - it should await a call to createReportComment, passing in the reportId and
+ *   the fields from req.body
+ * - on success, it should send back the object returned by createReportComment
+ * - on caught error, call next(error)
+ */
+/**
+ * 
  * Set up a POST request for /reports
  * 
  * - it should use an async function
@@ -73,7 +96,16 @@ apiRouter.post('/reports', async (req, res, next) => {
  * - on caught error, call next(error)
  */
 
-
+apiRouter.delete('/reports/:reportId',async(req,res,next)=>{
+    try{
+        const {reportId} = req.params
+        const {password} = req.body
+        const closedReport = await closeReport(reportId,password)
+        res.send(closedReport)
+    }catch(error){
+        next(error)
+    }
+})
 
 /**
  * Set up a DELETE request for /reports/:reportId
@@ -87,15 +119,7 @@ apiRouter.post('/reports', async (req, res, next) => {
 
 
 
-/**
- * Set up a POST request for /reports/:reportId/comments
- * 
- * - it should use an async function
- * - it should await a call to createReportComment, passing in the reportId and
- *   the fields from req.body
- * - on success, it should send back the object returned by createReportComment
- * - on caught error, call next(error)
- */
+
 
 module.exports = { apiRouter }
 
