@@ -49,7 +49,7 @@ async function getOpenReports() {
       delete report.password
     })
 
-    console.log("open bois",)
+ 
 
     return openReports
 
@@ -93,7 +93,7 @@ async function createReport(reportFields) {
     description,
     "isOpen",
     "expirationDate";`, reportFieldsValues)
-    console.log(report)
+ 
 
     return report
 
@@ -139,10 +139,26 @@ async function _getReport(reportId) {
  * If nothing is updated this way, throw an error
  */
 async function closeReport(reportId, password) {
+
   try {
-    // First, actually grab the report with that id
 
-
+    const reportToClose = await _getReport(reportId)
+   if(!reportToClose){
+      throw new Error('Report does not exist with that id')
+    }else if(reportToClose.password !== password){
+      throw new Error('Password incorrect for this report, please try again')
+    }else if(reportToClose.isOpen === false){
+      throw new Error('This report has already been closed')
+    }
+    if(reportToClose && reportToClose.password === password){
+        reportToClose.isOpen = false
+      await client.query(`
+      UPDATE reports
+      SET "isOpen" = false
+      WHERE id=${reportId};`)
+     }
+    return {message:"Report successfully closed!"}
+   
     // If it doesn't exist, throw an error with a useful message
 
 
