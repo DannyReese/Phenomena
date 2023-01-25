@@ -28,16 +28,43 @@ async function getOpenReports() {
   try {
     // first load all of the reports which are open
     const { rows: report } = await client.query(`SELECT * FROM reports`)
-    const openReports = report.filter(repo=>{
-      return repo.isOpen 
+    const openReports = report.filter(repo => {
+      return repo.isOpen
     })
 
-   
-    console.log(openReports)
-    
-return 
+    const reportId = report.map(repo => repo.id).join(',')
+    console.log(reportId)
 
- 
+    const { rows: openRepoComments } = await client.query(`SELECT * FROM comments WHERE "reportId" IN(${reportId})`)
+
+    console.log(openRepoComments)
+    openReports.map(report => {
+      report.comments = []
+      openRepoComments.map(comment => comment.reportId === report.id ? report.comments.push(comment.content) : null)
+      if (Date.parse(report.expirationDate) >= new Date()) {
+        report.isExpired = false
+      } else if (Date.parse(report.expirationDate) < new Date()) {
+        report.isExpired = true
+      }
+      delete report.password
+    })
+
+    // delete openReports[password]
+
+    console.log("open bois",)
+    // const polishedReports = await client.query(`
+    // SELECT 
+    // id, 
+    // title, 
+    // location, 
+    // description, 
+    // "isOpen", 
+    // "expirationDate",
+    // comments, 
+    // "isExpired"
+    // FROM `)
+    return openReports
+
     // then load the comments only for those reports, using a
     // WHERE "reportId" IN () clause
 
@@ -77,22 +104,16 @@ async function createReport(reportFields) {
   try {
     // insert the correct fields into the reports table
     // remember to return the new row from the query
-    await client.query(`
+    const { rows: [report] } = await client.query(`
     INSERT INTO reports(title,location,description,password)
-    VALUES($1,$2,$3,$4)`, reportFieldsValues)
-
-    const { rows: report } = await client.query(`
-    SELECT 
-    id, 
+    VALUES($1,$2,$3,$4)RETURNING id, 
     title,
     location,
     description,
     "isOpen",
-    "expirationDate"
-    FROM reports`)
-    // remove the password from the returned row
-
+    "expirationDate";`, reportFieldsValues)
     console.log(report)
+
     return report
 
 
@@ -116,13 +137,12 @@ async function createReport(reportFields) {
  * functions.
  */
 async function _getReport(reportId) {
+  console.log(reportId)
   try {
     // SELECT the report with id equal to reportId
-
-
+    const { rows: [report] } = await client.query(`SELECT * FROM reports WHERE id=$1`, [reportId]);
+    return report
     // return the report
-
-
   } catch (error) {
     throw error;
   }
@@ -175,40 +195,43 @@ async function closeReport(reportId, password) {
  */
 async function createReportComment(reportId, commentFields) {
   // read off the content from the commentFields
- const comment = commentFields.content
 
-
-
+  const content = commentFields.content
   try {
 
-    const {rows:report} = await client.query(`SELECT * FROM reports WHERE id=$1`,[reportId])
+    const report = await _getReport(reportId)
+
     // grab the report we are going to be commenting on
-    if(!report){
-      console.error('no report found')
+    if (report === undefined) {
+      throw new Error(`That report does not exist, no comment has been made`)
     }
     // if it wasn't found, throw an error saying so
-    if(report.isOpen === false){
-      console.error('report is not open')
+    if (report.isOpen === false) {
+      throw new Error(`That report has been closed, no comment has been made`)
     }
     // if it is not open, throw an error saying so
-    if(Date.parse(report.expirationDate) < new Date()){
-      console.error('expired')
+    if (Date.parse(report.expirationDate) < new Date()) {
+      throw new Error(`The discussion time on this report has expired, no comment has been made`)
     }
     // if the current date is past the expiration, throw an error saying so
     // you can use Date.parse(report.expirationDate) < new Date() to check
-    if(report){
-     report.comments = comment
-     report.expirationDate = addDays(report.expirationDate,1)
-     return report.comment
+    if (report) {
+      report.expirationDate = addDays(report.expirationDate, 1)
     }
-// then update the expiration date to a day from now
-// finally, return the comment
 
+    const { rows: [comment] } = await client.query(`INSERT INTO comments ("reportId",content)
+    VALUES ($1, $2) RETURNING *;`, [reportId, content])
 
+    // then update the expiration date to a day from now
+    // finally, return the comment
+
+    console.log(comment)
+
+    return comment
   } catch (error) {
     throw error;
   }
 }
 
 // export the client and all database functions below
-module.exports = { client, createReport, createReportComment ,getOpenReports}
+module.exports = { client, createReport, createReportComment, getOpenReports, _getReport, closeReport }
