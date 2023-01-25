@@ -32,15 +32,15 @@ async function getOpenReports() {
       return repo.isOpen
     })
 
-    const reportId = report.map(repo => repo.id).join(',')
-    console.log(reportId)
+    const reportIds = report.map(repo => repo.id).join(',')
+  
 
-    const { rows: openRepoComments } = await client.query(`SELECT * FROM comments WHERE "reportId" IN(${reportId})`)
+    const { rows: openRepoComments } = await client.query(`SELECT * FROM comments WHERE "reportId" IN(${reportIds})`)
 
-    console.log(openRepoComments)
+  
     openReports.map(report => {
       report.comments = []
-      openRepoComments.map(comment => comment.reportId === report.id ? report.comments.push(comment.content) : null)
+      openRepoComments.map(comment => comment.reportId === report.id ? report.comments.push(comment) : null)
       if (Date.parse(report.expirationDate) >= new Date()) {
         report.isExpired = false
       } else if (Date.parse(report.expirationDate) < new Date()) {
@@ -49,43 +49,24 @@ async function getOpenReports() {
       delete report.password
     })
 
-    // delete openReports[password]
-
     console.log("open bois",)
-    // const polishedReports = await client.query(`
-    // SELECT 
-    // id, 
-    // title, 
-    // location, 
-    // description, 
-    // "isOpen", 
-    // "expirationDate",
-    // comments, 
-    // "isExpired"
-    // FROM `)
+
     return openReports
 
     // then load the comments only for those reports, using a
     // WHERE "reportId" IN () clause
-
-
     // then, build two new properties on each report:
     // .comments for the comments which go with it
     //    it should be an array, even if there are none
     // .isExpired if the expiration date is before now
     //    you can use Date.parse(report.expirationDate) < new Date()
     // also, remove the password from all reports
-
-
     // finally, return the reports
-
 
   } catch (error) {
     throw error;
   }
 }
-
-
 /**
  * You should use the reportFields parameter (which is
  * an object with properties: title, location, description, password)
@@ -224,9 +205,6 @@ async function createReportComment(reportId, commentFields) {
 
     // then update the expiration date to a day from now
     // finally, return the comment
-
-    console.log(comment)
-
     return comment
   } catch (error) {
     throw error;
