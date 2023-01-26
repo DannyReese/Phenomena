@@ -1,3 +1,35 @@
+
+require('dotenv').config();
+const express = require('express');
+const morgan = require('morgan');
+const server = express();
+const cors = require('cors');
+const {apiRouter} = require('./api');
+const {client} = require('./db/index');
+const PORT = process.env.PORT;
+
+
+server.use(morgan('dev'));
+server.use(express.json());
+server.use(cors());
+
+
+server.use((req,res,next)=>{
+    console.log('beginning apiRouter');
+    next()
+})
+server.use('/api',apiRouter);
+
+server.use(function(req,res){
+    res.sendStatus(404)
+});
+
+server.listen(PORT,()=>{
+    console.log('listening to ' + PORT)
+    client.connect()
+})
+
+
 // Use the dotenv package, to create environment variables
 
 // Create a constant variable, PORT, based on what's in process.env.PORT or fallback to 3000
@@ -25,29 +57,3 @@
 
 // Start the server listening on port PORT
 // On success, connect to the database
-require('dotenv').config()
-const express = require('express');
-const morgan = require('morgan');
-const server = express();
-const cors = require('cors')
-const {apiRouter} = require('./api')
-const {client} = require('./db/index')
-const PORT = process.env.PORT;
-
-
-server.use(morgan('dev'));
-server.use(express.json());
-
-server.use(cors())
-// server.use('/api')
-
-server.use((req,res,next)=>{
-    console.log('beginning apiRouter')
-    next()
-})
-server.use('/api',apiRouter)
-
-server.listen(PORT,()=>{
-    console.log('listening to ' + PORT)
-    client.connect()
-})
