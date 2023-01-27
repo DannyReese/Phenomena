@@ -154,5 +154,5 @@ module.exports = {
   createReport,
   _getReport,
   closeReport,
-  createReportComment,
+  createReportComment
 };
