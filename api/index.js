@@ -3,13 +3,7 @@ const express = require('express');
 const apiRouter = express.Router();
 
 // Import the database adapter functions from the db
-import {
-  getOpenReports,
-  createReport,
-  _getReport,
-  closeReport,
-  createReportComment,
-} from './db/index';
+
 
 /**
  * - it should use an async function
@@ -17,7 +11,7 @@ import {
  * - on success, it should send back an object like { reports: theReports }
  * - on caught error, call next(error)
  */
-server.get('/reports', (req, res) => {});
+
 
 /**
  * Set up a POST request for /reports

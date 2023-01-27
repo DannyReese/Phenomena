@@ -5,15 +5,13 @@ const express = require('express');
 const server = express();
 const morgan = require('morgan');
 server.use(morgan('dev'));
-// Import cors 
-// Have the server use cors()
-
-// Have the server use bodyParser.json()
+const cors = require('cors');
+server.use(cors());
 server.use(bodyParser.json());
-// Have the server use your api router with prefix '/api'
-
+const apiRouter = require('./api');
+server.use(apiRouter);
 // Import the client from your db/index.js
-import { db } from './db/index';
+
 // Create custom 404 handler that sets the status code to 404.
 
 // Create custom error handling that sets the status code to 500
